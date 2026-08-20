@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { Busy, CopyRow, ExtLink, Field, Note, SECRET_PLACEHOLDER, saveConfig, useAction, type StepProps } from './shared';
+import { SignInButton } from '@/ui/SignInButton';
 
 export function GoogleStep({ mode, status, onSaved, signInAction }: StepProps & { signInAction?: () => Promise<void> }) {
   const [id, setId] = useState(status.google.clientId);
@@ -54,12 +55,9 @@ export function GoogleStep({ mode, status, onSaved, signInAction }: StepProps & 
           {status.googleConnected ? 'Calendar & Gmail connected ✓' : 'Calendar & Gmail not connected'}
         </div>
         {signInAction ? (
-          <form action={signInAction}>
-            <button type="submit" className="btn primary" disabled={!saved}
-              title={saved ? undefined : 'Save your Client ID and secret first'}>
-              {status.signedInAs ? 'Sign in again' : 'Sign in with Google'}
-            </button>
-          </form>
+          saved
+            ? <SignInButton callbackUrl="/setup?step=google" label={status.signedInAs ? 'Sign in again' : 'Sign in with Google'} />
+            : <button type="button" className="btn primary" disabled title="Save your Client ID and secret first">Sign in with Google</button>
         ) : (
           !complete && mode === 'edit' && <a className="btn small" href="/setup?step=google">Open the setup wizard to sign in</a>
         )}

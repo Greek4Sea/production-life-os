@@ -22,6 +22,9 @@ const NOTIFY_INTERVAL_MS = 30_000;
 const ALLOWED_HOSTS = /^(accounts\.google\.com|([a-z0-9-]+\.)*google\.com|accounts\.spotify\.com)$/i;
 
 let port = PREFERRED_PORT;
+// Attach mode: open a window onto an already-running Life OS server instead of
+// spawning one (e.g. LIFEOS_ATTACH_URL=http://localhost:3210).
+const attachUrl = (process.env.LIFEOS_ATTACH_URL || '').replace(/\/+$/, '');
 let dataDir = '';
 let logPath = '';
 let logStream: fs.WriteStream | null = null;
@@ -191,12 +194,13 @@ async function waitForServer(): Promise<void> {
 
 // ---------------------------------------------------------------- window
 
-const appUrl = (p = '/') => `http://localhost:${port}${p.startsWith('/') ? p : `/${p}`}`;
+const appUrl = (p = '/') => `${attachUrl || `http://localhost:${port}`}${p.startsWith('/') ? p : `/${p}`}`;
 
 function isAllowedNavigation(raw: string): boolean {
   try {
     const u = new URL(raw);
     if (u.hostname === 'localhost' && u.port === String(port)) return true;
+    if (attachUrl && raw.startsWith(attachUrl)) return true;
     return (u.protocol === 'https:') && ALLOWED_HOSTS.test(u.hostname);
   } catch { return false; }
 }
@@ -283,7 +287,7 @@ function createTray() {
   tray.setToolTip('Life OS');
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: 'Open Life OS', click: () => showWindow() },
-    { label: 'Restart server', click: () => void restartServer() },
+    ...(attachUrl ? [] : [{ label: 'Restart server', click: () => void restartServer() }]),
     { type: 'separator' },
     { label: 'Quit', click: () => { quitting = true; app.quit(); } },
   ]));
@@ -409,9 +413,13 @@ if (!app.requestSingleInstanceLock()) {
 
     registerIpc();
     try {
-      port = await choosePort();
-      startServer();
-      await waitForServer();
+      if (attachUrl) {
+        log(`attach mode: using existing server at ${attachUrl}`);
+      } else {
+        port = await choosePort();
+        startServer();
+        await waitForServer();
+      }
     } catch (e) {
       log(`startup failed: ${(e as Error).message}`);
       dialog.showErrorBox('Life OS could not start',
@@ -423,7 +431,7 @@ if (!app.requestSingleInstanceLock()) {
 
     createTray();
     createWindow();
-    notifyTimer = setInterval(() => void drainNotifications(), NOTIFY_INTERVAL_MS);
+    if (!attachUrl) notifyTimer = setInterval(() => void drainNotifications(), NOTIFY_INTERVAL_MS);
   });
 
   app.on('activate', () => showWindow()); // macOS dock click

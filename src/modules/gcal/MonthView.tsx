@@ -25,6 +25,19 @@ const fmtTime = (iso: string) => {
   return mins === 0 ? `${h}${ap}` : `${h}:${String(mins).padStart(2, '0')}${ap}`;
 };
 
+// Google's official embed, fed the ticked calendars + their colours. Uses the
+// Google session already present in this window, so private calendars render.
+function googleEmbedUrl(ids: string[], cals: Cal[], tz: string): string {
+  const p = new URLSearchParams({ ctz: tz, mode: 'WEEK', showTitle: '0', showPrint: '0', showTabs: '1', showCalendars: '0', wkst: '2' });
+  let q = p.toString();
+  for (const id of ids) {
+    q += `&src=${encodeURIComponent(id)}`;
+    const c = cals.find((x) => x.id === id)?.color;
+    if (c) q += `&color=${encodeURIComponent(c)}`;
+  }
+  return `https://calendar.google.com/calendar/embed?${q}`;
+}
+
 export function MonthView() {
   const today = ymd(new Date());
   const [anchor, setAnchor] = useState(() => {
@@ -35,7 +48,7 @@ export function MonthView() {
   const [colors, setColors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
-  const [view, setView] = useState<'month' | 'week'>('month');
+  const [view, setView] = useState<'month' | 'week' | 'google'>('month');
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date(); d.setDate(d.getDate() - d.getDay()); d.setHours(12, 0, 0, 0); return d;
   });
@@ -222,6 +235,7 @@ export function MonthView() {
         <div className="cal-seg">
           <button className={view === 'week' ? 'on' : ''} onClick={() => setView('week')}>Week</button>
           <button className={view === 'month' ? 'on' : ''} onClick={() => setView('month')}>Month</button>
+          <button className={view === 'google' ? 'on' : ''} onClick={() => setView('google')} title="Google Calendar itself, embedded">Google</button>
         </div>
         <button className="btn small" onClick={() => setShowCals(!showCals)}>
           Calendars {showCals ? '▴' : '▾'}
@@ -249,8 +263,14 @@ export function MonthView() {
       <div className={`cal-wrap${chatOpen ? ' chat-open' : ''}`}>
       <CalChat open={chatOpen} onClose={() => setChatOpen(false)} onCalendarChanged={load} />
       <div className="cal-inner">
-      <div className={`cal-body${view === 'week' ? ' wk-mode' : ''}`}>
-      {view === 'week' ? (
+      <div className={`cal-body${view === 'week' ? ' wk-mode' : ''}${view === 'google' ? ' g-mode' : ''}`}>
+      {view === 'google' ? (
+        <iframe
+          className="gcal-embed"
+          title="Google Calendar"
+          src={googleEmbedUrl(effectiveSel, cals, tz ?? 'UTC')}
+        />
+      ) : view === 'week' ? (
       <div className="wk" ref={wkRef}>
         <div className="wk-head" style={wkCols}>
           <div className="wk-gutter-spacer" />

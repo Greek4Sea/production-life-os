@@ -1563,3 +1563,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .refresh-btn:hover { border-color: var(--blue); }
 .refresh-btn:disabled { opacity: 0.7; cursor: default; }
+
+/* Calendar → Google tab: embedded Google Calendar */
+.cal-body.g-mode { display: flex; flex-direction: column; min-height: 70vh; }
+.gcal-embed { flex: 1; width: 100%; min-height: 70vh; border: 1px solid var(--line); border-radius: 14px; background: #fff; }

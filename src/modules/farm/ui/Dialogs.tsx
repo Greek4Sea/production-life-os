@@ -11,7 +11,6 @@ import { doSleep } from '../game/game';
 import { goalProgress, visibleGoals } from '../game/goals';
 import { countItem } from '../game/inventory';
 import { enterMine } from '../game/mine';
-import { resetSave } from '../game/state';
 import type { Game } from '../game/runtime';
 import { SEASON_NAMES } from '../game/clock';
 import { TIER_FLAVOR, TIER_NAMES, TOOL_INFO } from '../data/recipes';
@@ -345,42 +344,6 @@ function ElevatorDialog({ g }: { g: Game }) {
   );
 }
 
-function SettingsDialog({ g }: { g: Game }) {
-  const [armed, setArmed] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState('');
-  const s = g.save;
-  const reset = async () => {
-    if (!armed) { setArmed(true); return; }
-    setBusy(true);
-    try {
-      await resetSave();
-      location.reload();
-    } catch (e) {
-      setErr(String((e as Error).message ?? e));
-      setBusy(false);
-      setArmed(false);
-    }
-  };
-  return (
-    <Overlay title="⚙️ Settings" g={g}>
-      <div className="farm-help">
-        <div className="farm-shop-sub">Your farm</div>
-        <div>{SEASON_NAMES[s.calendar.season]} {s.calendar.day}, year {s.calendar.year} · 💰 {s.player.gold.toLocaleString()}</div>
-        <div className="farm-shop-sub">Start over</div>
-        <div>Deletes this farm for good — crops, buildings, tools, gold, everything — and starts a brand-new one. This cannot be undone.</div>
-        {err && <div style={{ color: 'var(--red, #f87171)' }}>{err}</div>}
-        <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-          <button className={`farm-btn${armed ? ' primary' : ''}`} onClick={reset} disabled={busy}>
-            {busy ? 'Resetting…' : armed ? 'Yes, delete my farm and restart' : 'Reset game'}
-          </button>
-          {armed && !busy && <button className="farm-btn" onClick={() => setArmed(false)}>Cancel</button>}
-        </div>
-      </div>
-    </Overlay>
-  );
-}
-
 function HelpDialog({ g }: { g: Game }) {
   return (
     <Overlay title="❓ How to Play" g={g}>
@@ -419,7 +382,6 @@ export function FarmDialogs({ g }: { g: Game }) {
     case 'trader': return <TraderDialog g={g} />;
     case 'chest': return <ChestDialog g={g} />;
     case 'help': return <HelpDialog g={g} />;
-    case 'settings': return <SettingsDialog g={g} />;
     default: return null;
   }
 }

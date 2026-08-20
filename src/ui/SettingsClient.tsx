@@ -2,7 +2,7 @@
 import { TIMEZONES } from '@/ui/timezones';
 import { useEffect, useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { CalendarIcon, BookIcon, MailIcon, DumbbellIcon, SettingsIcon, MusicIcon, TrophyIcon, NoteIcon, LockIcon } from './icons';
+import { CalendarIcon, BookIcon, MailIcon, DumbbellIcon, SettingsIcon, MusicIcon, TrophyIcon, NoteIcon, LockIcon, SproutIcon } from './icons';
 import { Integrations } from './Integrations';
 
 type Cal = { id: string; summary: string; primary: boolean };
@@ -32,6 +32,38 @@ function TzToggle() {
     <select className="tz-select" value={tz} onChange={(e) => pick(e.target.value)} aria-label="Timezone">
       {TIMEZONES.map((z) => <option key={z} value={z}>{z}</option>)}
     </select>
+  );
+}
+
+function FarmSettings() {
+  const [armed, setArmed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState('');
+  const reset = async () => {
+    if (!armed) { setArmed(true); setTimeout(() => setArmed(false), 6000); return; }
+    setBusy(true);
+    try {
+      const r = await fetch('/api/mod/farm/state', { method: 'DELETE' });
+      if (!r.ok) throw new Error(`server said ${r.status}`);
+      setMsg('Farm reset — open the game to start a new one.');
+    } catch (e) {
+      setMsg(`Could not reset: ${String((e as Error).message ?? e)}`);
+    } finally {
+      setBusy(false);
+      setArmed(false);
+    }
+  };
+  return (
+    <div className="setting-row">
+      <div>
+        <div className="label">Reset game</div>
+        <div className="sub">Deletes your farm for good and starts a brand-new one. Close the game first if it's open.</div>
+        {msg && <div className="sub" style={{ marginTop: 6 }}>{msg}</div>}
+      </div>
+      <button className={`btn small${armed ? ' primary' : ''}`} onClick={reset} disabled={busy}>
+        {busy ? 'Resetting…' : armed ? 'Tap again to confirm' : 'Reset'}
+      </button>
+    </div>
   );
 }
 
@@ -370,6 +402,11 @@ export function SettingsClient({ email: emailProp }: { email?: string }) {
             this machine). Folder and model live in Integrations → Notes and Integrations → AI.
           </div>
         </div>
+      </AppCard>
+
+      {/* Farm */}
+      <AppCard accent="accent-green" icon={<SproutIcon />} name="Farm" sub="the game">
+        <FarmSettings />
       </AppCard>
 
       {/* Kairos */}

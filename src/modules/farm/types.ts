@@ -212,4 +212,4 @@ export interface FishingRun {
   caught?: boolean;
 }
 
-export type DialogId = 'inventory' | 'craft' | 'goals' | 'sleep' | 'summary' | 'elevator' | 'help' | 'settings' | 'newtool' | 'trader' | 'chest' | null;
+export type DialogId = 'inventory' | 'craft' | 'goals' | 'sleep' | 'summary' | 'elevator' | 'help' | 'newtool' | 'trader' | 'chest' | null;

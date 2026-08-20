@@ -1,0 +1,123 @@
+{
+  "name": "production-life-os",
+  "productName": "Life OS",
+  "version": "0.1.0",
+  "description": "One dashboard that runs your life — calendar, mail, school, tasks, notes and more, running locally on your machine.",
+  "license": "MIT",
+  "private": true,
+  "main": "electron/dist/main.js",
+  "repository": "github:Greek4Sea/production-life-os",
+  "scripts": {
+    "dev": "next dev -p 3210",
+    "build": "next build && node scripts/prepare-standalone.mjs && npm run build:electron",
+    "build:electron": "esbuild electron/main.ts electron/preload.ts --bundle --platform=node --external:electron --outdir=electron/dist --format=cjs",
+    "start": "node server.js",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "electron": "npm run build:electron && electron .",
+    "dist": "npm run build && electron-builder --publish never",
+    "release": "npm run build && electron-builder --publish always"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.117.1",
+    "@electric-sql/pglite": "^0.3.6",
+    "drizzle-orm": "^0.44.2",
+    "next": "^15.4.5",
+    "next-auth": "^5.0.0-beta.29",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "web-push": "^3.6.7",
+    "ws": "^8.21.3"
+  },
+  "optionalDependencies": {
+    "node-pty": "^1.1.0"
+  },
+  "devDependencies": {
+    "@electron/rebuild": "^3.7.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@types/web-push": "^3.6.4",
+    "@types/ws": "^8.5.13",
+    "drizzle-kit": "^0.31.4",
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "esbuild": "^0.24.0",
+    "typescript": "^5.8.0"
+  },
+  "build": {
+    "appId": "com.greek4sea.lifeos",
+    "productName": "Life OS",
+    "artifactName": "LifeOS-${version}-${os}-${arch}.${ext}",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "electron/dist/**",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": ".next/standalone",
+        "to": "app",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "drizzle",
+        "to": "drizzle"
+      },
+      {
+        "from": "scripts",
+        "to": "scripts",
+        "filter": [
+          "install-tools.sh",
+          "install-tools.ps1"
+        ]
+      }
+    ],
+    "asar": true,
+    "npmRebuild": false,
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "hardenedRuntime": false,
+      "icon": "build/icon.png"
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "icon": "build/icon.png"
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "deb"
+      ],
+      "category": "Utility",
+      "icon": "build/icon.png"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "Greek4Sea",
+      "repo": "production-life-os"
+    }
+  }
+}

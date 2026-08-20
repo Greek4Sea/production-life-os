@@ -35,6 +35,12 @@ async function api(req: Request, p: string[]): Promise<Response | null> {
     return Response.json({ ok: true });
   }
 
+  // Settings → Reset: wipe the save; the client reloads and starts a new farm.
+  if (req.method === 'DELETE' && p[0] === 'state') {
+    await db().delete(t.farmState);
+    return Response.json({ ok: true });
+  }
+
   return null;
 }
 

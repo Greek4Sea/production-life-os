@@ -216,7 +216,19 @@ export async function loadSave(): Promise<FarmSave | null> {
   return migrate(row.state as FarmSave);
 }
 
+// Once a reset is underway no autosave (including the unload keepalive one)
+// may resurrect the old farm.
+let frozen = false;
+export function freezeSaves() { frozen = true; }
+
+export async function resetSave(): Promise<void> {
+  freezeSaves();
+  const res = await fetch('/api/mod/farm/state', { method: 'DELETE' });
+  if (!res.ok) { frozen = false; throw new Error(`reset failed: ${res.status}`); }
+}
+
 export async function storeSave(save: FarmSave, keepalive = false): Promise<void> {
+  if (frozen) return;
   await fetch('/api/mod/farm/state', {
     method: 'PUT',
     headers: { 'content-type': 'application/json' },

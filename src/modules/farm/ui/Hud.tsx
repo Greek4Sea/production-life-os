@@ -29,6 +29,7 @@ export function Hud({ g }: { g: Game }) {
           📜{openGoals > 0 && <span className="farm-hud-count">{openGoals}</span>}
         </button>
         <button className="farm-hud-btn" onClick={() => { g.dialog = 'help'; g.notify(); }} title="How to play">❓</button>
+        <button className="farm-hud-btn" onClick={() => { g.dialog = 'settings'; g.notify(); }} title="Settings">⚙️</button>
         {inMine && (
           <>
             <span>⛏️ {g.mineFloor?.floor === -1 ? 'the Below' : `floor ${g.mineFloor?.floor ?? 0}`}</span>

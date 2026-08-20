@@ -340,10 +340,13 @@ async function api(req: Request, path: string[]): Promise<Response | null> {
 async function dashboardData() {
   const rows = await db().select().from(t.gmailMessages)
     .orderBy(desc(t.gmailMessages.receivedAt)).limit(30);
-  const unread = rows.filter((r) => r.unread && r.category !== 'noise').length;
+  // Newsletters and noise are muted: they never count as unread or show on the
+  // tile (they still appear in their own sections on the Gmail page).
+  const MUTED = new Set(['noise', 'newsletter']);
+  const live = rows.filter((r) => !MUTED.has(r.category));
+  const unread = live.filter((r) => r.unread).length;
   const important = rows.filter((r) => r.category === 'important').slice(0, 3);
-  // Latest mail regardless of category — the tile always shows real inbox state.
-  const latest = rows.slice(0, 4).map((r) => ({
+  const latest = live.slice(0, 4).map((r) => ({
     id: r.id, fromAddr: r.fromAddr, subject: r.subject,
     summary: r.summary, unread: r.unread, category: r.category,
   }));

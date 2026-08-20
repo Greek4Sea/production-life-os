@@ -86,13 +86,18 @@ function log(line: string) {
 
 // ---------------------------------------------------------------- port
 
-function portFree(p: number): Promise<boolean> {
+// A port counts as free only if nothing holds it on ANY interface — another
+// server bound to 0.0.0.0 would still win the race for http://localhost:<p>.
+function bindable(p: number, host?: string): Promise<boolean> {
   return new Promise((resolve) => {
     const srv = net.createServer();
     srv.once('error', () => resolve(false));
     srv.once('listening', () => srv.close(() => resolve(true)));
-    srv.listen(p, '127.0.0.1');
+    if (host) srv.listen(p, host); else srv.listen(p);
   });
+}
+async function portFree(p: number): Promise<boolean> {
+  return (await bindable(p)) && (await bindable(p, '127.0.0.1'));
 }
 
 function freePort(): Promise<number> {
@@ -107,6 +112,8 @@ function freePort(): Promise<number> {
 }
 
 async function choosePort(): Promise<number> {
+  const forced = parseInt(process.env.LIFEOS_PORT ?? '', 10);
+  if (forced) return forced;
   if (await portFree(PREFERRED_PORT)) return PREFERRED_PORT;
   const p = await freePort();
   log(`WARNING: port ${PREFERRED_PORT} is busy; using ${p}. Google OAuth redirect URIs pinned to ${PREFERRED_PORT} will not work until the other process is stopped.`);

@@ -2,7 +2,7 @@
   "name": "production-life-os",
   "productName": "Life OS",
   "version": "0.1.0",
-  "description": "One dashboard that runs your life — calendar, mail, school, tasks, notes and more, running locally on your machine.",
+  "description": "One dashboard that runs your life \u2014 calendar, mail, school, tasks, notes and more, running locally on your machine.",
   "license": "MIT",
   "private": true,
   "main": "electron/dist/main.js",
@@ -61,7 +61,8 @@
         "from": ".next/standalone",
         "to": "app",
         "filter": [
-          "**/*"
+          "**/*",
+          ".next/**"
         ]
       },
       {
@@ -119,5 +120,6 @@
       "owner": "Greek4Sea",
       "repo": "production-life-os"
     }
-  }
+  },
+  "author": "Greek4Sea"
 }

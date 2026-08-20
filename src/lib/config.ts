@@ -1,6 +1,7 @@
 import fs from 'fs';
 import { randomBytes, generateKeyPairSync } from 'crypto';
 import { configPath, kairosDefaultDir } from './paths';
+import { BUILTIN_GOOGLE } from './builtin';
 
 // Runtime configuration. Everything the old app read from .env now lives in
 // <dataDir>/config.json, written by the setup wizard and Settings → Integrations.
@@ -44,7 +45,7 @@ export function defaultConfig(): AppConfig {
       vapidSubject: 'mailto:life-os@localhost', allowedEmail: '', tz: '',
       port: DEFAULT_PORT, setupCompletedAt: '', aboutMe: '',
     },
-    google: { clientId: '', clientSecret: '' },
+    google: { clientId: BUILTIN_GOOGLE.clientId, clientSecret: BUILTIN_GOOGLE.clientSecret },
     ai: { provider: 'ollama' },
     anthropic: { apiKey: '' },
     ollama: { url: 'http://localhost:11434', tasksModel: 'qwen3.5:9b', recipesModel: 'qwen3.5:9b', passwordsModel: 'llama3.2' },
@@ -178,7 +179,7 @@ export const appOrigin = () => process.env.AUTH_URL || `http://localhost:${getCo
 
 export const isSetupDone = () => {
   const c = getConfig();
-  return Boolean(c.core.setupCompletedAt && c.core.allowedEmail && c.google.clientId);
+  return Boolean(c.core.setupCompletedAt && c.core.allowedEmail);
 };
 
 // Non-secret view for the UI (booleans where the value is secret).
@@ -191,7 +192,11 @@ export function getPublicConfig() {
       vapidPublicKey: c.core.vapidPublicKey,
     },
     origin: appOrigin(),
-    google: { clientId: c.google.clientId, hasSecret: Boolean(c.google.clientSecret) },
+    google: {
+      clientId: c.google.clientId, hasSecret: Boolean(c.google.clientSecret),
+      builtin: Boolean(BUILTIN_GOOGLE.clientId) && c.google.clientId === BUILTIN_GOOGLE.clientId,
+      hasBuiltin: Boolean(BUILTIN_GOOGLE.clientId && BUILTIN_GOOGLE.clientSecret),
+    },
     ai: c.ai,
     anthropic: { hasKey: Boolean(c.anthropic.apiKey) },
     ollama: c.ollama,

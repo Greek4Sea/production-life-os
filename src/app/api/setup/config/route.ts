@@ -1,5 +1,6 @@
 import { patchConfig, getPublicConfig, type AppConfig } from '@/lib/config';
 import { requireSetupAccess } from '@/lib/setupAuth';
+import { BUILTIN_GOOGLE } from '@/lib/builtin';
 
 // Which keys the wizard may write. Everything else in config.json is internal.
 const ALLOWED: Record<string, string[]> = {
@@ -24,6 +25,10 @@ export async function POST(req: Request) {
   if (!body || typeof body !== 'object') return Response.json({ error: 'bad body' }, { status: 400 });
   const patch: Record<string, unknown> = {};
   for (const [section, fields] of Object.entries(body as Record<string, unknown>)) {
+    if (section === 'google' && (fields as { useBuiltin?: boolean })?.useBuiltin) {
+      patch.google = { clientId: BUILTIN_GOOGLE.clientId, clientSecret: BUILTIN_GOOGLE.clientSecret };
+      continue;
+    }
     if (section === 'quickLinks') {
       if (Array.isArray(fields)) {
         patch.quickLinks = fields

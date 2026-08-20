@@ -1548,3 +1548,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .summary-name { width: 100px; }
   .setup-nav { flex-wrap: wrap; }
 }
+
+/* built-in Google client: advanced toggle */
+.link-btn { background: none; border: none; color: var(--muted, #94a3b8); text-decoration: underline; cursor: pointer; padding: 0; font-size: 13px; align-self: flex-start; }
+.link-btn:hover { color: var(--fg, #e2e8f0); }
+.advanced-box { border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 12px 14px; }
+.advanced-box summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }

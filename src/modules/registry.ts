@@ -1,4 +1,5 @@
 import type { ModuleManifest } from './types';
+import { imessageAvailable, imessageTarget, sendIMessage } from '@/lib/imessage';
 import { getConfig } from '@/lib/config';
 import { gcal } from './gcal';
 import { canvas } from './canvas';
@@ -17,6 +18,23 @@ import { farmModule } from './farm';
 // Pseudo-module: app-wide settings (timezone) live under /api/settings/system.
 const system: ModuleManifest = {
   id: 'system', name: 'System', tileSize: 'sm',
+  async api(req, p) {
+    // POST /api/mod/system/test-text — send a test iMessage to the saved number.
+    if (req.method === 'POST' && p[0] === 'test-text') {
+      try {
+        const to = await imessageTarget();
+        if (!to) return Response.json({ ok: false, error: 'Save a phone number first' }, { status: 400 });
+        await sendIMessage(to, '👋 Life OS: task reminders will arrive here.');
+        return Response.json({ ok: true });
+      } catch (e) {
+        return Response.json({ ok: false, error: String((e as Error).message ?? e) }, { status: 502 });
+      }
+    }
+    if (req.method === 'GET' && p[0] === 'text-status') {
+      return Response.json({ available: imessageAvailable(), to: await imessageTarget() });
+    }
+    return null;
+  },
   get defaultSettings() { return { tz: getConfig().core.tz || 'UTC' }; },
 };
 

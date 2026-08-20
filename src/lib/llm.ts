@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { getConfig } from '@/lib/config';
+import { ensureOllamaRunning } from '@/lib/ollamaStart';
 
 // One door for "give me JSON back" requests from tasks / recipes / passwords.
 // Routes to local Ollama (default) or to Anthropic when the user chose to skip
@@ -40,6 +41,7 @@ export async function chatJson<T = Record<string, unknown>>(req: JsonChat): Prom
   }
 
   const model = c.ollama[req.slot];
+  await ensureOllamaRunning(c.ollama.url);
   const res = await fetch(`${c.ollama.url}/api/chat`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },

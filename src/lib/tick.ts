@@ -3,6 +3,7 @@ import { and, eq, lte } from 'drizzle-orm';
 import { MODULES } from '@/modules/registry';
 import { db, t } from '@/db';
 import { pushToAll } from '@/lib/push';
+import { textTaskReminder } from '@/lib/imessage';
 
 // A sync failure that smells like expired/revoked credentials becomes an
 // in-app notification (deduped per module per day) so re-login never goes
@@ -76,6 +77,7 @@ export async function sendDueNotifications() {
   for (const n of due) {
     try {
       await pushToAll({ title: n.title, body: n.body ?? undefined, url: n.url ?? undefined });
+      if (n.moduleId === 'tasks') await textTaskReminder(n.title, n.body);
       await db().update(t.notifications)
         .set({ status: 'sent', sentAt: new Date() })
         .where(eq(t.notifications.id, n.id));

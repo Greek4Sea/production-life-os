@@ -67,6 +67,46 @@ function FarmSettings() {
   );
 }
 
+// Settings → Life OS: phone number that task reminders are texted to (via Messages.app on the Mac).
+function TextReminders() {
+  const [to, setTo] = useState('');
+  const [available, setAvailable] = useState(true);
+  const [busy, setBusy] = useState<'save' | 'test' | null>(null);
+  const [msg, setMsg] = useState('');
+  useEffect(() => {
+    fetch('/api/mod/system/text-status').then((r) => r.json())
+      .then((d) => { setTo(d.to ?? ''); setAvailable(!!d.available); }).catch(() => {});
+  }, []);
+  const save = async () => {
+    setBusy('save'); setMsg('');
+    try {
+      await fetch('/api/settings/system', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ imessageTo: to.trim() }) });
+      setMsg(to.trim() ? 'Saved — due tasks will be texted here.' : 'Texts turned off.');
+    } finally { setBusy(null); }
+  };
+  const test = async () => {
+    setBusy('test'); setMsg('');
+    try {
+      await fetch('/api/settings/system', { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ imessageTo: to.trim() }) });
+      const r = await fetch('/api/mod/system/test-text', { method: 'POST' }).then((x) => x.json());
+      setMsg(r.ok ? 'Test text sent ✓' : `Failed: ${r.error}`);
+    } finally { setBusy(null); }
+  };
+  if (!available) return null;
+  return (
+    <div className="setting-row" style={{ flexWrap: 'wrap', gap: 8 }}>
+      <div style={{ flex: '1 1 100%' }}>
+        <div className="label">Text me task reminders</div>
+        <div className="sub">Sent from Messages on this Mac when a task with a time is due. Your phone number or Apple ID email.</div>
+      </div>
+      <input className="text-input" style={{ flex: '1 1 180px' }} value={to} onChange={(e) => setTo(e.target.value)} placeholder="+1 555 123 4567" inputMode="tel" />
+      <button className="btn small" onClick={save} disabled={busy !== null}>{busy === 'save' ? <span className="spin" /> : 'Save'}</button>
+      <button className="btn small" onClick={test} disabled={busy !== null || !to.trim()}>{busy === 'test' ? <span className="spin" /> : 'Send test'}</button>
+      {msg && <div className="sub" style={{ flex: '1 1 100%' }}>{msg}</div>}
+    </div>
+  );
+}
+
 function AppCard({ accent, icon, name, sub, children }: {
   accent: string; icon: React.ReactNode; name: string; sub?: string; children: React.ReactNode;
 }) {
@@ -223,6 +263,7 @@ export function SettingsClient({ email: emailProp }: { email?: string }) {
             Sign out
           </button>
         </div>
+        <TextReminders />
         <div className="setting-row">
           <div>
             <div className="label">Push notifications</div>

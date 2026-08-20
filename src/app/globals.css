@@ -1554,3 +1554,12 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 .link-btn:hover { color: var(--fg, #e2e8f0); }
 .advanced-box { border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 12px; padding: 12px 14px; }
 .advanced-box summary { cursor: pointer; font-weight: 600; margin-bottom: 8px; }
+
+/* page-header refresh button (Gmail) */
+.refresh-btn {
+  margin-left: auto; width: 40px; height: 40px; border-radius: 12px;
+  background: var(--raised); border: 1px solid var(--line); color: var(--fg, #e2e8f0);
+  font-size: 20px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+.refresh-btn:hover { border-color: var(--blue); }
+.refresh-btn:disabled { opacity: 0.7; cursor: default; }

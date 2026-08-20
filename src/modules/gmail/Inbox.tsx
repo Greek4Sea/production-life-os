@@ -47,13 +47,26 @@ export function Inbox() {
   const [mails, setMails] = useState<Mail[] | null>(null);
   const [showNoise, setShowNoise] = useState(false);
   const [error, setError] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = () =>
+    fetch('/api/mod/gmail/messages').then((r) => r.json()).then((data) => {
+      if (Array.isArray(data)) { setMails(data); setError(''); }
+      else setError(data.error ?? 'failed to load');
+    }).catch(() => setError('offline'));
+
+  // Header ↻: pull from Gmail right now, then reload the list.
+  const refresh = () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    fetch('/api/mod/gmail/sync', { method: 'POST' })
+      .then((r) => r.json())
+      .then((d) => { if (d?.error) setError(d.error); })
+      .catch(() => {})
+      .finally(() => { load().finally(() => setRefreshing(false)); });
+  };
 
   useEffect(() => {
-    const load = () =>
-      fetch('/api/mod/gmail/messages').then((r) => r.json()).then((data) => {
-        if (Array.isArray(data)) setMails(data);
-        else setError(data.error ?? 'failed to load');
-      }).catch(() => setError('offline'));
     load();
     // Refresh whenever the inbox comes back to the foreground, and every 2 min
     // while it stays open (mails only change when a background sync lands).
@@ -64,6 +77,7 @@ export function Inbox() {
       document.removeEventListener('visibilitychange', onVisible);
       clearInterval(interval);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const markRead = (id: string) => {
@@ -81,6 +95,10 @@ export function Inbox() {
       <header className="page-header">
         <Link href="/" className="back-btn" aria-label="Back to dashboard"><BackIcon /></Link>
         <h1>Gmail</h1>
+        <button className={`refresh-btn${refreshing ? ' busy' : ''}`} onClick={refresh} disabled={refreshing}
+          aria-label="Refresh inbox" title="Sync Gmail now">
+          {refreshing ? <span className="spin" /> : '↻'}
+        </button>
       </header>
 
       {!mails && !error && <div className="tile-empty"><span className="spin" /></div>}

@@ -214,6 +214,15 @@ async function retriageAll() {
 }
 
 async function api(req: Request, path: string[]): Promise<Response | null> {
+  // Manual refresh from the inbox header: sync Gmail right now.
+  if (req.method === 'POST' && path[0] === 'sync') {
+    try {
+      await sync();
+      return Response.json({ ok: true });
+    } catch (e) {
+      return Response.json({ ok: false, error: String(e).slice(0, 300) }, { status: 502 });
+    }
+  }
   if (req.method === 'POST' && path[0] === 'retriage') {
     return Response.json({ retriaged: await retriageAll() });
   }

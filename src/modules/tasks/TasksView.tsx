@@ -40,6 +40,9 @@ export function TasksView() {
     fetch('/api/mod/tasks/list').then((r) => r.json())
       .then((d) => Array.isArray(d) && setTasks(d)).catch(() => {});
   useEffect(() => { load(); }, []);
+  // Re-evaluate "time's up" labels every 30s while the page is open.
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => { const i = setInterval(() => setNowTick(Date.now()), 30_000); return () => clearInterval(i); }, []);
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior: 'smooth' }); }, [chat, thinking]);
 
   const send = () => {
@@ -96,8 +99,9 @@ export function TasksView() {
   const upcoming = open.filter((t) => t.due && dayKey(t.due) > today)
     .sort((a, b) => String(a.due).localeCompare(String(b.due)));
 
+  const timesUp = (t: Task) => !t.done && !!t.due && !t.allDay && new Date(t.due).getTime() <= nowTick;
   const row = (t: Task, opts?: { overdue?: boolean }) => (
-    <div className={`task-row${t.done ? ' is-done' : ''}`} key={t.id}>
+    <div className={`task-row${t.done ? ' is-done' : ''}${timesUp(t) || opts?.overdue ? ' is-late' : ''}`} key={t.id}>
       <button className={`task-check${t.done ? ' on' : ''}`} onClick={() => toggle(t.id)}
         aria-label={t.done ? 'Mark not done' : 'Mark done'}>{t.done ? '✓' : ''}</button>
       <div className="what">
@@ -105,7 +109,8 @@ export function TasksView() {
         {(fmtTime(t) || t.repeatDays || opts?.overdue) && (
           <div className="s">
             {opts?.overdue && <span style={{ color: 'var(--red)', fontWeight: 700 }}>overdue · {fmtDay(t.due!)} </span>}
-            {!opts?.overdue && fmtTime(t)}
+            {!opts?.overdue && timesUp(t) && <span style={{ color: 'var(--red)', fontWeight: 700 }}>⏰ time&apos;s up · {fmtTime(t)}</span>}
+            {!opts?.overdue && !timesUp(t) && fmtTime(t)}
             {t.repeatDays ? `${fmtTime(t) && !opts?.overdue ? ' · ' : ' '}${repeatLabel(t.repeatDays)}` : ''}
           </div>
         )}

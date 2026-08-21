@@ -1567,3 +1567,6 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 /* Calendar → Google tab: embedded Google Calendar */
 .cal-body.g-mode { display: flex; flex-direction: column; min-height: 70vh; }
 .gcal-embed { flex: 1; width: 100%; min-height: 70vh; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+
+/* tasks past their time and still open */
+.task-row.is-late { box-shadow: inset 3px 0 0 var(--red); }

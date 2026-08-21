@@ -22,6 +22,32 @@ async function scheduleReminder(id: string, title: string, due: Date) {
 
 import { chatJson } from '@/lib/llm';
 
+// Time's up and still not done → keep nudging: a reminder every NAG_EVERY_MIN
+// for NAG_HOURS after the due time (push + text), until the task is ticked off.
+const NAG_EVERY_MIN = 30;
+const NAG_HOURS = 4;
+async function nagOverdue() {
+  const now = Date.now();
+  const open = await db().query.tasks.findMany({ where: (x, { eq: eqOp }) => eqOp(x.done, false) });
+  for (const task of open) {
+    if (!task.due || task.allDay) continue;
+    const late = now - task.due.getTime();
+    if (late <= 0 || late > NAG_HOURS * 3_600_000) continue;
+    const slot = Math.floor(late / (NAG_EVERY_MIN * 60_000));
+    if (slot < 1) continue; // the due-time reminder itself already fired
+    const mins = slot * NAG_EVERY_MIN;
+    await db().insert(t.notifications).values({
+      id: randomUUID(), moduleId: 'tasks',
+      title: `⏰ Time's up: ${task.title}`,
+      body: mins >= 60 ? `Due ${Math.round(mins / 60 * 10) / 10}h ago — still not done` : `Due ${mins} min ago — still not done`,
+      url: '/m/tasks',
+      scheduledFor: new Date(),
+      dedupeKey: `task:${task.id}:nag:${task.due.toISOString()}:${slot}`,
+    }).onConflictDoNothing();
+  }
+}
+
+
 // A Date for a wall-clock time in the app timezone (DST-safe).
 function zoned(dateStr: string, hh: number, mm = 0): Date {
   const guess = new Date(`${dateStr}T${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:00Z`);
@@ -233,6 +259,8 @@ export const tasksModule: ModuleManifest = {
   id: 'tasks',
   name: 'Tasks',
   tileSize: 'sm',
+  syncEveryMin: 5,
+  sync: nagOverdue,
   api,
   dashboardData,
 };
